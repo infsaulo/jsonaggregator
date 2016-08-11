@@ -1,4 +1,4 @@
-package grammar;
+package jsonaggregator.grammar;
 
 import java.io.Serializable;
 
