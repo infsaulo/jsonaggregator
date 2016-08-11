@@ -9,6 +9,11 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.wizzardo.tools.json.JsonItem;
+import com.wizzardo.tools.json.JsonObject;
+
+import jsonaggregator.grammar.Field;
+
 public class MemsqlAggregator implements Aggregator, Serializable {
 
   private static final long serialVersionUID = 6177079076132389890L;
@@ -23,10 +28,38 @@ public class MemsqlAggregator implements Aggregator, Serializable {
   }
 
   @Override
-  public String aggregateFields(final String aggregationGrammar, final String rawJson) {
+  public List<Object> retrieveField(final Field field, final JsonObject json) {
 
+    List<Object> listResult = new ArrayList<>();
 
-    return null;
+    if (field.isMultipleRetrieval()) {
+
+      for (final JsonItem item : json.getAsJsonArray(field.getSrcName())) {
+        final String value = item.asString();
+        final String query = String.format(field.getDirections(), value);
+
+        try {
+
+          listResult.addAll(retrieveFiedlValue(query));
+        } catch (final SQLException e) {
+          e.printStackTrace();
+        }
+      }
+
+    } else {
+
+      final String value = json.getAsString(field.getSrcName());
+      final String query = String.format(field.getDirections(), value);
+
+      try {
+
+        listResult = retrieveFiedlValue(query);
+      } catch (final SQLException e) {
+        e.printStackTrace();
+      }
+    }
+
+    return listResult;
   }
 
   private List<Object> retrieveFiedlValue(final String query) throws SQLException {

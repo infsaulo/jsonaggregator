@@ -12,11 +12,11 @@ public class GrammarParserTest {
         + "\"multipleRetrieval\": true}" + "]}";
 
     GrammarParser.getGrammar(grammarJsonRepr);
-
   }
 
   @Test(expected = NullPointerException.class)
   public void testSemanticallyIncorrectGrammarRepr() {
+
     final String grammarJsonRepr =
         "{\"fields\":[" + "{\"name\":\"field1\",\"srcName\":\"field2\", \"destName\":\"field_1\"},"
             + "{\"multipleRetrieval\": true}" + "]}";
