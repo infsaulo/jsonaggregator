@@ -68,6 +68,9 @@ sourceCompatibility = 1.8
 	  compile "org.apache.beam:java-sdk-all:+"
 	  compile 'com.wizzardo.tools:tools:+'
 	  
+	  runtime "mysql:mysql-connector-java:+"
+	  
+	  
       testCompile 'junit:junit:+'
       testCompile "org.mockito:mockito-core:1.+"
       

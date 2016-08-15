@@ -23,7 +23,7 @@ public class MemsqlAggregator implements Aggregator, Serializable {
   public MemsqlAggregator(final String url, final String user, final String pass)
       throws InstantiationException, IllegalAccessException, ClassNotFoundException, SQLException {
 
-    Class.forName("com.mysql.jdbc.Driver").newInstance();
+    Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
     conn = DriverManager.getConnection(url, user, pass);
   }
 
