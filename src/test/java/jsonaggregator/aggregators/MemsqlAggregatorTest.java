@@ -1,9 +1,12 @@
 package jsonaggregator.aggregators;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.List;
 
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.wizzardo.tools.json.JsonObject;
@@ -15,8 +18,19 @@ import jsonaggregator.grammar.GrammarParser;
 
 public class MemsqlAggregatorTest {
 
+  static Connection conn;
+
+  @BeforeClass
+  public static void setupClass()
+      throws SQLException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+
+    Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+    conn = DriverManager.getConnection(System.getProperty("DB_URL_TEST"),
+        System.getProperty("DB_USER_TEST"), System.getProperty("DB_PASS_TEST"));
+  }
+
   @Test
-  public void testRetrieveFieldFromMemsql() {
+  public void testRetrieveFieldFromMemsql() throws SQLException {
 
     final String grammarRepr = "{\"fields\":[{\"name\":cluster, \"srcName\":\"address\", "
         + "\"directions\":\"select cluster_id from address_cluster_ids where address = X'%s'\"}]}";
@@ -26,24 +40,17 @@ public class MemsqlAggregatorTest {
     final JsonObject jsonObj = JsonTools.parse(jsonRepr).asJsonObject();
     final Grammar grammar = GrammarParser.getGrammar(grammarRepr);
 
-    try {
+    final MemsqlAggregator fieldAggregator = new MemsqlAggregator();
 
-      final MemsqlAggregator fieldAggregator = new MemsqlAggregator(
-          "jdbc:mysql://104.197.1.101:3307/blockstem", "saulo", "1J/x=/[DO{p&|~+1");
+    for (final Field field : grammar.getFields()) {
 
-      for (final Field field : grammar.getFields()) {
-
-        final List<Object> resultList = fieldAggregator.retrieveField(field, jsonObj);
-        Assert.assertTrue(!resultList.isEmpty());
-      }
-    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException
-        | SQLException e) {
-      e.printStackTrace();
+      final List<Object> resultList = fieldAggregator.retrieveField(conn, field, jsonObj);
+      Assert.assertTrue(!resultList.isEmpty());
     }
   }
 
   @Test
-  public void testMultipleRetrieveFieldFromMemsql() {
+  public void testMultipleRetrieveFieldFromMemsql() throws SQLException {
 
     final String grammarRepr =
         "{\"fields\":[{\"name\":cluster, \"srcName\":\"addresses\", \"multipleRetrieval\":true, "
@@ -55,24 +62,17 @@ public class MemsqlAggregatorTest {
     final JsonObject jsonObj = JsonTools.parse(jsonRepr).asJsonObject();
     final Grammar grammar = GrammarParser.getGrammar(grammarRepr);
 
-    try {
+    final MemsqlAggregator fieldAggregator = new MemsqlAggregator();
 
-      final MemsqlAggregator fieldAggregator = new MemsqlAggregator(
-          "jdbc:mysql://104.197.1.101:3307/blockstem", "saulo", "1J/x=/[DO{p&|~+1");
+    for (final Field field : grammar.getFields()) {
 
-      for (final Field field : grammar.getFields()) {
-
-        final List<Object> resultList = fieldAggregator.retrieveField(field, jsonObj);
-        Assert.assertTrue(!resultList.isEmpty());
-      }
-    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException
-        | SQLException e) {
-      e.printStackTrace();
+      final List<Object> resultList = fieldAggregator.retrieveField(conn, field, jsonObj);
+      Assert.assertTrue(!resultList.isEmpty());
     }
   }
 
   @Test
-  public void testLoopRequestsRetrieveFieldFromMemsql() {
+  public void testLoopRequestsRetrieveFieldFromMemsql() throws SQLException {
 
     final String grammarRepr =
         "{\"fields\":[{\"name\":cluster, \"srcName\":\"addresses\", \"multipleRetrieval\":true, "
@@ -84,21 +84,14 @@ public class MemsqlAggregatorTest {
     final JsonObject jsonObj = JsonTools.parse(jsonRepr).asJsonObject();
     final Grammar grammar = GrammarParser.getGrammar(grammarRepr);
 
-    try {
+    final MemsqlAggregator fieldAggregator = new MemsqlAggregator();
 
-      final MemsqlAggregator fieldAggregator = new MemsqlAggregator(
-          "jdbc:mysql://104.197.1.101:3307/blockstem", "saulo", "1J/x=/[DO{p&|~+1");
+    for (int indexTrial = 0; indexTrial < 100; indexTrial++) {
+      for (final Field field : grammar.getFields()) {
 
-      for (int indexTrial = 0; indexTrial < 100; indexTrial++) {
-        for (final Field field : grammar.getFields()) {
-
-          final List<Object> resultList = fieldAggregator.retrieveField(field, jsonObj);
-          Assert.assertTrue(!resultList.isEmpty());
-        }
+        final List<Object> resultList = fieldAggregator.retrieveField(conn, field, jsonObj);
+        Assert.assertTrue(!resultList.isEmpty());
       }
-    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException
-        | SQLException e) {
-      e.printStackTrace();
     }
   }
 

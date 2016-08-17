@@ -75,6 +75,13 @@ sourceCompatibility = 1.8
       testCompile "org.mockito:mockito-core:1.+"
       
    }
+   
+   test {
+      systemProperty "DB_URL_TEST", "$System.env.DB_URL_TEST"
+      systemProperty "DB_USER_TEST", "$System.env.DB_USER_TEST"
+      systemProperty "DB_PASS_TEST", "$System.env.DB_PASS_TEST"
+      systemProperty "DB_QUERY_TEST", "$System.env.DB_QUERY_TEST" 
+   }
 
 
    task sourcesJar(type: Jar, dependsOn: classes) {

@@ -2,7 +2,6 @@ package jsonaggregator.aggregators;
 
 import java.io.Serializable;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -14,36 +13,24 @@ import com.wizzardo.tools.json.JsonObject;
 
 import jsonaggregator.grammar.Field;
 
-public class MemsqlAggregator implements Aggregator, Serializable {
+public class MemsqlAggregator implements DbAggregator, Serializable {
 
-  private static final long serialVersionUID = 6177079076132389890L;
-
-  final Connection conn;
-
-  public MemsqlAggregator(final String url, final String user, final String pass)
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException, SQLException {
-
-    Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-    conn = DriverManager.getConnection(url, user, pass);
-  }
+  private static final long serialVersionUID = 97581030976788024L;
 
   @Override
-  public List<Object> retrieveField(final Field field, final JsonObject json) {
+  public List<Object> retrieveField(final Connection conn, final Field field, final JsonObject json)
+      throws SQLException {
 
     List<Object> listResult = new ArrayList<>();
 
     if (field.isMultipleRetrieval()) {
 
       for (final JsonItem item : json.getAsJsonArray(field.getSrcName())) {
+
         final String value = item.asString();
         final String query = String.format(field.getDirections(), value);
 
-        try {
-
-          listResult.addAll(retrieveFiedlValue(query));
-        } catch (final SQLException e) {
-          e.printStackTrace();
-        }
+        listResult.addAll(retrieveFiedlValue(conn, query));
       }
 
     } else {
@@ -51,28 +38,45 @@ public class MemsqlAggregator implements Aggregator, Serializable {
       final String value = json.getAsString(field.getSrcName());
       final String query = String.format(field.getDirections(), value);
 
-      try {
-
-        listResult = retrieveFiedlValue(query);
-      } catch (final SQLException e) {
-        e.printStackTrace();
-      }
+      listResult = retrieveFiedlValue(conn, query);
     }
 
     return listResult;
   }
 
-  private List<Object> retrieveFiedlValue(final String query) throws SQLException {
+  private List<Object> retrieveFiedlValue(final Connection conn, final String query) {
 
     final List<Object> resultList = new ArrayList<>();
-    final Statement stmt = conn.createStatement();
-    final ResultSet results = stmt.executeQuery(query);
+    Statement stmt = null;
+    ResultSet results = null;
 
-    while (results.next()) {
-      final Object obj = results.getObject(1);
-      resultList.add(obj);
+    try {
+      stmt = conn.createStatement();
+      results = stmt.executeQuery(query);
+
+      while (results.next()) {
+
+        final Object obj = results.getObject(1);
+        resultList.add(obj);
+      }
+    } catch (final SQLException e) {
+      e.printStackTrace();
+    } finally {
+      if (stmt != null) {
+        try {
+          stmt.close();
+        } catch (final SQLException e) {
+          e.printStackTrace();
+        }
+      }
+      if (results != null) {
+        try {
+          results.close();
+        } catch (final SQLException e) {
+          e.printStackTrace();
+        }
+      }
     }
-
     return resultList;
   }
 
